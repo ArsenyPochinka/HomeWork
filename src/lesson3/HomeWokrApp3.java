@@ -37,26 +37,27 @@ public class HomeWokrApp3 {
             System.out.print("\n");
         }
 
-        System.out.println("#5\nfor example n=5, initialValue=5\n" + Arrays.toString(CreateAnArray(5,5)));
+        System.out.println("#5\nfor example n=5, initialValue=5\n" + Arrays.toString(createAnArray(5,5)));
 
-        int[] arr6 = MinMaxOfArray(1,2,3,4,-5,-103,201,204);
+        int[] arr6 = minMaxOfArray(1,2,3,4,-5,-103,201,204);
         System.out.println("#6\nfor example array [1,2,3,4,-5,-103,201,204]\n" + "Minimum of array="+arr6[0]+"\nMaximum of array="+arr6[1]);
 
         System.out.println("#7\n"
                 +"There is a place in the array (for example array [1,1,1,2,1]) where the sum of the left and the right parts of the array are equal — "
-                + SumOfLeftAndRightParts(1,1,1,2,1));
+                + sumOfLeftAndRightParts(1,1,1,2,1));
 
         System.out.println("#8\nfor example array [1,2,3,4,5]\n"
-                +"for example n=-2: " + Arrays.toString(ChangeShift_n(-2,1,2,3,4,5))
-                +"\nfor example n=2: " + Arrays.toString(ChangeShift_n(2,1,2,3,4,5)));
+                +"for example n=-2: " + Arrays.toString(changeShift_n(-2,1,2,3,4,5))
+                +"\nfor example n=2: " + Arrays.toString(changeShift_n(2,1,2,3,4,5)));
     }
 
-    private static int[] CreateAnArray(int len, int initialValue) {
+    private static int[] createAnArray(int len, int initialValue) {
         int[] arr5 = new int[len];
         for(int i=0; i<len; i++) arr5[i]=initialValue;
         return arr5;
         }
-    private static int[] MinMaxOfArray(int... arr6) {
+
+    private static int[] minMaxOfArray(int... arr6) {
         int min = arr6[0];
         int max = arr6[0];
         for(int i=1; i<arr6.length; i++) {
@@ -66,7 +67,8 @@ public class HomeWokrApp3 {
         int[] result = {min, max};
         return result;
         }
-    private static boolean SumOfLeftAndRightParts(int... arr7) {
+
+    private static boolean sumOfLeftAndRightParts(int... arr7) {
         boolean result=false;
         int sumleft=0;
         for(int i=0; i<arr7.length-1; i++) {
@@ -79,7 +81,8 @@ public class HomeWokrApp3 {
         }
         return result;
     }
-    private static int[] ChangeShiftPlus(int... arr8) {
+
+    private static int[] changeShiftPlus(int... arr8) {
         int variableLast=arr8[arr8.length-1];
         int variable1=arr8[0];
         for(int i=0; i<arr8.length-1; i++) {
@@ -90,7 +93,8 @@ public class HomeWokrApp3 {
         arr8[0]=variableLast;
         return arr8;
     }
-    private static int[] ChangeShiftMinus(int... arr8) {
+
+    private static int[] changeShiftMinus(int... arr8) {
         int variableFirst=arr8[0];
         int variable1=arr8[arr8.length-1];
         for(int i=arr8.length-1; i>0; i--) {
@@ -101,12 +105,13 @@ public class HomeWokrApp3 {
         arr8[arr8.length-1]=variableFirst;
         return arr8;
     }
-    private static int[] ChangeShift_n(int n, int... arr8) {
+
+    private static int[] changeShift_n(int n, int... arr8) {
         if(n>=0) {
-            for(int i=0; i<n; i++) arr8=ChangeShiftPlus(arr8);
+            for(int i=0; i<n; i++) arr8 = changeShiftPlus(arr8);
         }
         else {
-            for (int i=n; n < 0; n++) arr8 = ChangeShiftMinus(arr8);
+            for (int i=n; n < 0; n++) arr8 = changeShiftMinus(arr8);
         }
         return arr8;
         }

@@ -13,9 +13,8 @@ public class SumArray {
                         result += Integer.parseInt(arr[i][j]);
                     }
                     catch (NumberFormatException e) {
-                        System.out.println("Value:" + arr[i][j]);
-                        System.out.printf("The sell of array —> line: %d, column: %d \n", i+1, j+1);
-                        throw new MyArrayDataException("This string's value is not parsable integer.", e);
+                        throw new MyArrayDataException("This string's value is not parsable integer.\n"+"Value:" + arr[i][j]
+                                                       +"\nThe sell of array —> line: " + (i+1) + " column: " + (j+1), e);
                     }
                 }
             }

@@ -16,7 +16,7 @@ public class Server extends JFrame {
 
     private JTextField msgInputField;
     private JTextArea chatArea;
-
+    private ServerSocket serverSocket;
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
@@ -33,15 +33,12 @@ public class Server extends JFrame {
     }
 
     public void connection() throws IOException {
-        try (ServerSocket serverSocket = new ServerSocket(SERVER_PORT)) {
+            serverSocket = new ServerSocket(SERVER_PORT);
             System.out.println("The server is running, waiting for connection...");
             socket = serverSocket.accept();
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
             System.out.println("The client is connected.");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public void getMessage() {

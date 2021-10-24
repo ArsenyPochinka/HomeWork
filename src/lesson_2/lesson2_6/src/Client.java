@@ -23,6 +23,7 @@ public class Client extends JFrame {
         public Client() {
             try {
                 openConnection();
+                getMessage();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -33,6 +34,9 @@ public class Client extends JFrame {
             socket = new Socket(SERVER_ADDR, SERVER_PORT);
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
+        }
+
+        public void getMessage() {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -78,26 +82,23 @@ public class Client extends JFrame {
                     msgInputField.grabFocus();
                 } catch (IOException e) {
                     e.printStackTrace();
-                    JOptionPane.showMessageDialog(null, "Ошибка отправки сообщения");
+                    JOptionPane.showMessageDialog(null, "Error sending the message");
                 }
             }
         }
 
         public void prepareGUI() {
-            // Параметры окна
             setBounds(600, 300, 500, 500);
-            setTitle("Клиент");
+            setTitle("Client");
             setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-            // Текстовое поле для вывода сообщений
             chatArea = new JTextArea();
             chatArea.setEditable(false);
             chatArea.setLineWrap(true);
             add(new JScrollPane(chatArea), BorderLayout.CENTER);
 
-            // Нижняя панель с полем для ввода сообщений и кнопкой отправки сообщений
             JPanel bottomPanel = new JPanel(new BorderLayout());
-            JButton btnSendMsg = new JButton("Отправить");
+            JButton btnSendMsg = new JButton("Send");
             bottomPanel.add(btnSendMsg, BorderLayout.EAST);
             msgInputField = new JTextField();
             add(bottomPanel, BorderLayout.SOUTH);
@@ -115,7 +116,6 @@ public class Client extends JFrame {
                 }
             });
 
-            // Настраиваем действие на закрытие окна
             addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {

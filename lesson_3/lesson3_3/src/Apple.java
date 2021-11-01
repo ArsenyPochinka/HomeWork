@@ -1,5 +1,3 @@
-package leeson3_1;
-
 public class Apple extends Fruit{
 
     private static final Float weight=1.0f;

@@ -1,5 +1,3 @@
-package leeson3_1;
-
 import java.util.ArrayList;
 
 public class Box<T extends Fruit> {

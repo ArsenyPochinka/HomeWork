@@ -1,68 +1,150 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class Server {
+public class Server extends JFrame {
 
-    private ServerSocket socket;
+    private final int SERVER_PORT = 8189;
+
+    private JTextField msgInputField;
+    private JTextArea chatArea;
+    private ServerSocket serverSocket;
+    private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
 
     public Server() {
+        socket = null;
         try {
-            socket = new ServerSocket(8080);
-            start();
+            connection();
+            getMessage();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        prepareGUI();
+    }
+
+    public void connection() throws IOException {
+            serverSocket = new ServerSocket(SERVER_PORT);
+            System.out.println("The server is running, waiting for connection...");
+            socket = serverSocket.accept();
+            in = new DataInputStream(socket.getInputStream());
+            out = new DataOutputStream(socket.getOutputStream());
+            System.out.println("The client is connected.");
+    }
+
+    public void getMessage() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while (true) {
+                        String strFromClient = in.readUTF();
+                        if (strFromClient.equalsIgnoreCase("/end")) {
+                            break;
+                        }
+                        chatArea.append(strFromClient);
+                        chatArea.append("\n");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+        public void sendMessage() {
+            if (!msgInputField.getText().trim().isEmpty()) {
+                try {
+                    out.writeUTF(msgInputField.getText());
+                    msgInputField.setText("");
+                    msgInputField.grabFocus();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Error sending the message");
+                }
+            }
+        }
+
+    public void closeConnection() {
+        try {
+            in.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void start() throws IOException {
-        System.out.println("Server socket started...");
-        System.out.println("Server socket is waiting for a connection...");
-        Socket accepted = socket.accept();
-        System.out.println("Client connected...");
-        System.out.println("Address: " + accepted.getInetAddress());
+    public void prepareGUI() {
+        setBounds(600, 300, 500, 500);
+        setTitle("Server");
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        in = new DataInputStream(accepted.getInputStream());
-        out = new DataOutputStream(accepted.getOutputStream());
+        chatArea = new JTextArea();
+        chatArea.setEditable(false);
+        chatArea.setLineWrap(true);
+        add(new JScrollPane(chatArea), BorderLayout.CENTER);
 
-        listenInboundMessages();
-    }
-
-    private void listenInboundMessages() {
-        try {
-            while (true) {
-                String message = readInboundMessage();
-                System.out.println("Inbound message detected...");
-                System.out.println("Message: " + message);
-                sendOutboundMessage(message);
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        JButton btnSendMsg = new JButton("Send");
+        bottomPanel.add(btnSendMsg, BorderLayout.EAST);
+        msgInputField = new JTextField();
+        add(bottomPanel, BorderLayout.SOUTH);
+        bottomPanel.add(msgInputField, BorderLayout.CENTER);
+        btnSendMsg.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                sendMessage();
             }
-        } catch (MyServerException ex) {
-            System.out.println("The client is gone away.");
-            System.out.println("Connection gracefully closed.");
-            System.out.println("NOTE: Check log files for a detail information.");
-        }
+        });
+        msgInputField.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                sendMessage();
+            }
+        });
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                super.windowClosing(e);
+                try {
+                    out.writeUTF("/end");
+                    closeConnection();
+                } catch (IOException exc) {
+                    exc.printStackTrace();
+                }
+            }
+        });
+
+        setVisible(true);
     }
 
-    private void sendOutboundMessage(String message) {
-        try {
-            out.writeUTF("ECHO: " + message);
-        } catch (IOException ex) {
-            throw new MyServerException("Something went wrong during inbound message read-operation.", ex);
-        }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new Server();
+                    }
+                });
+            }
     }
 
-    private String readInboundMessage() {
-        try {
-            return in.readUTF();
-        } catch (EOFException ex) {
-            throw new MyServerException("End of stream reached unexpectedly. Probably, client is shutdown.", ex);
-        } catch (IOException ex) {
-            throw new MyServerException("Something went wrong during inbound message read-operation.", ex);
-        }
-    }
-}

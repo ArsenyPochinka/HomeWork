@@ -1,5 +1,6 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Scanner;
@@ -9,15 +10,12 @@ public class Client {
     private DataInputStream in;
     private DataOutputStream out;
     private Scanner scanner;
+    private Thread t1;
+    private Thread t2;
 
     public Client() {
         try {
-
-            /**
-             * Эквивалентно
-             * this.socket = new Socket("locahost", 8080);
-             */
-            this.socket = new Socket("127.0.0.1", 8080);
+            this.socket = new Socket("127.0.0.1", 8089);
             this.scanner = new Scanner(System.in);
             start();
         } catch (IOException e) {
@@ -29,30 +27,73 @@ public class Client {
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
 
-            new Thread(() -> {
-                while (true) {
+        sendOutboundMessage();
+        listenInboundMessages();
+    }
+
+    private void listenInboundMessages() {
+        t1 = new Thread(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    String inboundMessage = readInboundMessage();
+                    System.out.println("MESSAGE FROM SERVER: " + inboundMessage);
+                } catch (MyServerException ex) {
+                    System.out.println("The server is close.");
+                    closeConnection();
+                }
+            }
+        });
+                t1.start();
+    }
+
+    private String readInboundMessage() {
+        try {
+            return in.readUTF();
+        } catch (EOFException ex) {
+            throw new MyServerException("End of stream reached unexpectedly. Probably, server is shutdown.", ex);
+        } catch (IOException ex) {
+            throw new MyServerException("Something went wrong during inbound message read-operation.", ex);
+        }
+    }
+
+    private void sendOutboundMessage() {
+            t2 = new Thread(() -> {
+                while (!Thread.currentThread().isInterrupted()) {
+                    String outboundMessage = scanner.nextLine();
                     try {
-                        String inboundMessage = in.readUTF();
-                        System.out.println(inboundMessage);
+                        out.writeUTF(outboundMessage);
+                    } catch (EOFException ex) {
+                        throw new MyServerException("End of stream reached unexpectedly. Probably, server is shutdown.", ex);
                     } catch (IOException ex) {
-                        System.out.println("Connection closed.");
-                        break;
+                        throw new MyServerException("Something went wrong during inbound message read-operation.", ex);
                     }
                 }
-            })
-                    .start();
-
-
-        while (true) {
-            try {
-                System.out.println("Please enter a message...");
-                String outboundMessage = scanner.nextLine();
-                out.writeUTF(outboundMessage);
-            } catch (IOException ex) {
-                System.out.println("Connection closed.");
-                break;
-            }
-        }
-
+            });
+                t2.start();
     }
+
+    public void closeConnection() {
+        t2.interrupt();
+        t1.interrupt();
+        try {
+            in.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Connection gracefully closed.");
+        System.out.println("NOTE: Check log files for a detail information.");
+        scanner.close();
+        System.exit(0);
+    }
+
 }

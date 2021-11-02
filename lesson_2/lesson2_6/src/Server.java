@@ -4,16 +4,18 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Scanner;
 
 public class Server {
 
     private ServerSocket socket;
     private DataInputStream in;
     private DataOutputStream out;
+    private Scanner scanner;
 
     public Server() {
         try {
-            socket = new ServerSocket(8080);
+            socket = new ServerSocket(8089);
             start();
         } catch (IOException e) {
             e.printStackTrace();
@@ -30,30 +32,26 @@ public class Server {
         in = new DataInputStream(accepted.getInputStream());
         out = new DataOutputStream(accepted.getOutputStream());
 
+        this.scanner = new Scanner(System.in);
+
         listenInboundMessages();
+        sendOutboundMessage();
     }
 
     private void listenInboundMessages() {
-        try {
+        new Thread(() -> {
             while (true) {
-                String message = readInboundMessage();
-                System.out.println("Inbound message detected...");
-                System.out.println("Message: " + message);
-                sendOutboundMessage(message);
+                try {
+                    String inboundMessage = readInboundMessage();
+                    System.out.println("MESSAGE FROM CLIENT: " + inboundMessage);
+                } catch (MyServerException ex) {
+                    System.out.println("The client is gone away.");
+                    System.out.println("Connection gracefully closed.");
+                    System.out.println("NOTE: Check log files for a detail information.");
+                    break;
+                }
             }
-        } catch (MyServerException ex) {
-            System.out.println("The client is gone away.");
-            System.out.println("Connection gracefully closed.");
-            System.out.println("NOTE: Check log files for a detail information.");
-        }
-    }
-
-    private void sendOutboundMessage(String message) {
-        try {
-            out.writeUTF("ECHO: " + message);
-        } catch (IOException ex) {
-            throw new MyServerException("Something went wrong during inbound message read-operation.", ex);
-        }
+        }).start();
     }
 
     private String readInboundMessage() {
@@ -65,4 +63,16 @@ public class Server {
             throw new MyServerException("Something went wrong during inbound message read-operation.", ex);
         }
     }
+
+    private void sendOutboundMessage() {
+            while (true) {
+                try {
+                    String outboundMessage = scanner.nextLine();
+                    out.writeUTF(outboundMessage);
+                } catch (IOException ex) {
+                    throw new MyServerException("Connection closed.", ex);
+                }
+            }
+    }
+
 }

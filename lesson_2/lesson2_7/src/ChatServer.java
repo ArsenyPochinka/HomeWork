@@ -40,18 +40,26 @@ public class ChatServer {
     }
 
     public boolean isUsernameOccupied(String username) {
-//        for (String loggedUsername : loggedUsernames) {
-//            if (loggedUsernames.equals(username)) {
-//                return true;
-//            }
-//        }
-//        return false;
-
         return loggedClients.stream()
                 .anyMatch(c -> c.getName().equals(username));
     }
 
     public void broadcastMessage(String message) {
-        loggedClients.forEach(ch -> ch.sendMessage(message));
+            String[] splitMessage = message.split("\\s");
+            if(splitMessage[2].equals("/w")) {
+            String hiddenMessage = splitMessage[0] + " (hidden message) --> " + message.substring(message.indexOf(splitMessage[4]));
+            loggedClients.stream()
+                    .filter(ch -> ch.getName().equals(splitMessage[3]))
+                    .findFirst()
+                    .get().sendMessage(hiddenMessage);
+        } else if(loggedClients.stream().anyMatch(ch -> ch.getName().equals(splitMessage[0]))) {
+                loggedClients
+                        .stream()
+                        .filter(ch -> !(ch.getName().equals(splitMessage[0])))
+                        .forEach(ch -> ch.sendMessage(message));
+        }
+        else {
+            loggedClients.forEach(ch -> ch.sendMessage(message));
+        }
     }
 }

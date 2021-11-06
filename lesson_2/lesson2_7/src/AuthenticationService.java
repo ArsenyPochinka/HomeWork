@@ -10,12 +10,6 @@ public class AuthenticationService {
     );
 
     public Optional<String> findUsernameByLoginAndPassword(String login, String password) {
-//        for (User u: users) {
-//            if (u.getLogin().equals(login) && u.getPassword().equals(password)) {
-//                return Optional.of(u.getUsername());
-//            }
-//        }
-//        return Optional.empty();
 
         return users.stream()
                 .filter(u -> u.getLogin().equals(login) && u.getPassword().equals(password))

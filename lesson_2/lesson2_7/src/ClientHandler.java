@@ -19,11 +19,11 @@ public class ClientHandler {
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
         } catch (IOException ex) {
-            throw new RuntimeException("Something went wring during a client connection establishing.");
+            throw new RuntimeException("Something went wrong during a client connection establishing.");
         }
 
         doAuthentication();
-        listenMessages();
+        redirectMessages();
     }
 
     public String getName() {
@@ -34,7 +34,7 @@ public class ClientHandler {
         try {
             performAuthentication();
         } catch (IOException ex) {
-            throw new RuntimeException("Something went wring during a client authentication.");
+            throw new RuntimeException("Something went wrong during a client authentication.");
         }
     }
 
@@ -52,6 +52,7 @@ public class ClientHandler {
                                 username -> {
                                     if (!server.isUsernameOccupied(username)) {
                                         server.broadcastMessage(String.format("User[%s] is logged in", username));
+                                        sendMessage("Correct data, you are connected to the chat!");
                                         name = username;
                                         server.addClient(this);
                                         isSuccess.set(true);
@@ -75,17 +76,17 @@ public class ClientHandler {
         }
     }
 
-    public void readMessage() {
+    public void readAndBroadcastMessage() {
         try {
-            server.broadcastMessage(in.readUTF());
+            server.broadcastMessage(this.getName() + " --> " + in.readUTF());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void listenMessages() {
+    public void redirectMessages() {
         while (true) {
-            readMessage();
+            readAndBroadcastMessage();
         }
     }
 }

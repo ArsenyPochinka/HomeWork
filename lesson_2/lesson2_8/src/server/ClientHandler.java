@@ -1,3 +1,5 @@
+package server;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -19,11 +21,11 @@ public class ClientHandler {
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
         } catch (IOException ex) {
-            throw new RuntimeException("Something went wrong during a client connection establishing.");
+            throw new RuntimeException("Something went wring during a client connection establishing.");
         }
 
         doAuthentication();
-        redirectMessages();
+        listenMessages();
     }
 
     public String getName() {
@@ -34,7 +36,7 @@ public class ClientHandler {
         try {
             performAuthentication();
         } catch (IOException ex) {
-            throw new RuntimeException("Something went wrong during a client authentication.");
+            throw new RuntimeException("Something went wring during a client authentication.");
         }
     }
 
@@ -52,7 +54,6 @@ public class ClientHandler {
                                 username -> {
                                     if (!server.isUsernameOccupied(username)) {
                                         server.broadcastMessage(String.format("User[%s] is logged in", username));
-                                        sendMessage("Correct data, you are connected to the chat!");
                                         name = username;
                                         server.addClient(this);
                                         isSuccess.set(true);
@@ -64,6 +65,8 @@ public class ClientHandler {
                         );
 
                 if (isSuccess.get()) break;
+            } else {
+                sendMessage("You need to be logged-in.");
             }
         }
     }
@@ -76,17 +79,17 @@ public class ClientHandler {
         }
     }
 
-    public void readAndBroadcastMessage() {
+    public void readMessage() {
         try {
-            server.broadcastMessage(this.getName() + " --> " + in.readUTF());
+            server.broadcastMessage(in.readUTF());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void redirectMessages() {
+    public void listenMessages() {
         while (true) {
-            readAndBroadcastMessage();
+            readMessage();
         }
     }
 }

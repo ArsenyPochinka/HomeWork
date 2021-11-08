@@ -15,7 +15,6 @@ public class ChattingFrame {
         messageArea.setEditable(false);
         this.onReceive = message -> {
                 messageArea.append(message);
-                messageArea.append("\n");
         };
 
         frame = new JPanel();

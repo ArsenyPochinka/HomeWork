@@ -13,6 +13,7 @@ public class AuthenticationService {
     );
 
     public Optional<String> findUsernameByLoginAndPassword(String login, String password) {
+
         return users.stream()
                 .filter(u -> u.getLogin().equals(login) && u.getPassword().equals(password))
                 .findFirst()
@@ -48,7 +49,7 @@ public class AuthenticationService {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             User user = (User) o;
-            return Objects.equals(username, user.username) && Objects.equals(login, user.login) && Objects.equals(password, user.password);
+            return username.equals(user.username) && login.equals(user.login) && password.equals(user.password);
         }
 
         @Override

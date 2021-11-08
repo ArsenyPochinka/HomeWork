@@ -13,6 +13,7 @@ public class ClientHandler {
     private final DataInputStream in;
     private final DataOutputStream out;
     private String name;
+    private String message;
 
     public ClientHandler(Socket socket, ChatServer server) {
         this.socket = socket;
@@ -21,11 +22,12 @@ public class ClientHandler {
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
         } catch (IOException ex) {
-            throw new RuntimeException("Something went wring during a client connection establishing.");
+            closeConnection();
+            throw new RuntimeException("Something went wrong during a client connection establishing.");
         }
-
+        new Thread(this::closing);
         doAuthentication();
-        listenMessages();
+        redirectMessages();
     }
 
     public String getName() {
@@ -36,60 +38,106 @@ public class ClientHandler {
         try {
             performAuthentication();
         } catch (IOException ex) {
-            throw new RuntimeException("Something went wring during a client authentication.");
+            closeConnection();
+            throw new RuntimeException("Something went wrong during a client authentication.");
         }
     }
 
     private void performAuthentication() throws IOException {
         while (true) {
-            String inboundMessage = in.readUTF();
-            if (inboundMessage.startsWith("-auth")) {
-                // valid request sample: -auth l1 p1
-                String[] credentials = inboundMessage.split("\\s");
+            sendMessage("Please, input login: ");
+            String login = in.readUTF();
+            sendMessage(login + "\n");
+            sendMessage("Please, input password: ");
+            String password = in.readUTF();
+            sendMessage(password + "\n");
 
                 AtomicBoolean isSuccess = new AtomicBoolean(false);
-                server.getAuthenticationService()
-                        .findUsernameByLoginAndPassword(credentials[1], credentials[2])
-                        .ifPresentOrElse(
-                                username -> {
-                                    if (!server.isUsernameOccupied(username)) {
-                                        server.broadcastMessage(String.format("User[%s] is logged in", username));
-                                        name = username;
-                                        server.addClient(this);
-                                        isSuccess.set(true);
-                                    } else {
-                                        sendMessage("Current username is already occupied.");
-                                    }
-                                },
-                                () -> sendMessage("Bad credentials.")
-                        );
+            server.getAuthenticationService()
+                    .findUsernameByLoginAndPassword(login, password)
+                    .ifPresentOrElse(username -> {
+                        if (!server.isUsernameOccupied(username)) {
+                            server.broadcastMessage(String.format("%s is logged in", username));
+                            sendMessage("Correct data, you are connected to the chat! \n\n");
+                            name = username;
+                            server.addClient(this);
+                            isSuccess.set(true);
+                        } else {
+                            sendMessage("This user is already connected. \n\n");
+                        }
+                    }, () -> sendMessage("Bad credentials. \n\n"));
 
                 if (isSuccess.get()) break;
-            } else {
-                sendMessage("You need to be logged-in.");
             }
-        }
     }
 
     public void sendMessage(String outboundMessage) {
         try {
             out.writeUTF(outboundMessage);
         } catch (IOException e) {
+            closeConnection();
             e.printStackTrace();
         }
     }
 
-    public void readMessage() {
+    public void readAndBroadcastMessage() {
         try {
-            server.broadcastMessage(in.readUTF());
+            server.broadcastMessage(this.getName() + " --> " + in.readUTF());
+        } catch (IOException e) {
+            closeConnection();
+            e.printStackTrace();
+        }
+    }
+
+    public void read() {
+        try {
+            message = in.readUTF();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void listenMessages() {
+    public String getMessage() {
+        return message;
+    }
+
+    public void redirectMessages() {
         while (true) {
-            readMessage();
+            readAndBroadcastMessage();
         }
     }
+
+    public synchronized void closing(){
+        while (true) {
+            try {
+                if (in.readUTF().equals("/end")) {
+                    closeConnection();
+                    break;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void closeConnection() {
+        server.removeUsername(this);
+        server.broadcastMessage("Attention: " + this.getName() + " exited the chat.");
+        try {
+            in.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

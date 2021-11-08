@@ -21,7 +21,7 @@ public class ChatServer {
             while (true) {
                 System.out.println("Waiting for a new connection...");
                 Socket client = socket.accept();
-                System.out.println("Client accepted.");
+                System.out.println("Client.Client accepted.");
                 new Thread(() -> new ClientHandler(client, this)).start();
             }
         } catch (IOException e) {
@@ -37,7 +37,7 @@ public class ChatServer {
         loggedClients.add(client);
     }
 
-    public synchronized void removeClient(ClientHandler client) {
+    public synchronized void removeUsername(ClientHandler client) {
         loggedClients.remove(client);
     }
 
@@ -47,6 +47,15 @@ public class ChatServer {
     }
 
     public synchronized void broadcastMessage(String message) {
-        loggedClients.forEach(ch -> ch.sendMessage(message));
+            String[] splitMessage = message.split("\\s");
+            if(splitMessage[2].equals("/w")) {
+            String hiddenMessage = splitMessage[0] + " (hidden message) --> " + message.substring(message.indexOf(splitMessage[4]));
+            loggedClients.stream()
+                    .filter(ch -> ch.getName().equals(splitMessage[3]))
+                    .findFirst()
+                    .get().sendMessage(hiddenMessage + "\n");
+        } else {
+            loggedClients.forEach(ch -> ch.sendMessage(message + "\n"));
+        }
     }
 }

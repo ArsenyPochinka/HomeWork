@@ -1,6 +1,7 @@
 package adapter;
 
-import ru.gb.current.gui.ChatFrame;
+
+import gui.ChatFrame;
 
 public class ChatAdapter {
 

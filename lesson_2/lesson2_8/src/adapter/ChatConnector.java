@@ -17,6 +17,7 @@ public class ChatConnector {
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
         } catch (IOException e) {
+            closeConnection();
             throw new RuntimeException("Something went wrong during a connection to the server.", e);
         }
     }
@@ -25,6 +26,7 @@ public class ChatConnector {
         try {
             out.writeUTF(outboundMessage);
         } catch (IOException e) {
+            closeConnection();
             throw new RuntimeException("Something went wrong during sending message to the server.", e);
         }
     }
@@ -33,7 +35,26 @@ public class ChatConnector {
         try {
             return in.readUTF();
         } catch (IOException e) {
+            closeConnection();
             throw new RuntimeException("Something went wrong during receiving message from the server.", e);
+        }
+    }
+
+    public void closeConnection() {
+        try {
+            in.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

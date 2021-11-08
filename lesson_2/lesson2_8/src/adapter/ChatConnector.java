@@ -56,6 +56,9 @@ public class ChatConnector {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        finally {
+            System.exit(0);
+        }
     }
 
 }

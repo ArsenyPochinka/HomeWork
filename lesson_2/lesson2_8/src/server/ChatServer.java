@@ -49,11 +49,10 @@ public class ChatServer {
     public synchronized void broadcastMessage(String message) {
             String[] splitMessage = message.split("\\s");
             if(splitMessage[2].equals("/w")) {
-            String hiddenMessage = splitMessage[0] + " (hidden message) --> " + message.substring(message.indexOf(splitMessage[4]));
+            String hiddenMessage = splitMessage[0] + " (hidden message to " + splitMessage[3] + ") -->" + message.substring(message.indexOf(splitMessage[4]));
             loggedClients.stream()
-                    .filter(ch -> ch.getName().equals(splitMessage[3]))
-                    .findFirst()
-                    .get().sendMessage(hiddenMessage + "\n");
+                    .filter(ch -> ch.getName().equals(splitMessage[3]) || ch.getName().equals(splitMessage[0]))
+                    .forEach(ch -> ch.sendMessage(hiddenMessage + "\n"));
         } else {
             loggedClients.forEach(ch -> ch.sendMessage(message + "\n"));
         }

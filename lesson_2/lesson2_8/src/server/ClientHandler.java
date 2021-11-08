@@ -13,9 +13,11 @@ public class ClientHandler {
     private final DataInputStream in;
     private final DataOutputStream out;
     private String name;
-    private String message;
+    private volatile String message;
 
     public ClientHandler(Socket socket, ChatServer server) {
+        // There can be any string here
+        this.message = "start client";
         this.socket = socket;
         this.server = server;
         try {
@@ -25,7 +27,7 @@ public class ClientHandler {
             closeConnection();
             throw new RuntimeException("Something went wrong during a client connection establishing.");
         }
-        new Thread(this::closing);
+        new Thread(() -> closing()).start();
         doAuthentication();
         redirectMessages();
     }
@@ -39,17 +41,17 @@ public class ClientHandler {
             performAuthentication();
         } catch (IOException ex) {
             closeConnection();
-            throw new RuntimeException("Something went wrong during a client authentication.");
+            throw new RuntimeException("Something went wrong during a client connection establishing..");
         }
     }
 
     private void performAuthentication() throws IOException {
         while (true) {
             sendMessage("Please, input login: ");
-            String login = in.readUTF();
+            String login = readMessage();
             sendMessage(login + "\n");
             sendMessage("Please, input password: ");
-            String password = in.readUTF();
+            String password = readMessage();
             sendMessage(password + "\n");
 
                 AtomicBoolean isSuccess = new AtomicBoolean(false);
@@ -76,25 +78,22 @@ public class ClientHandler {
             out.writeUTF(outboundMessage);
         } catch (IOException e) {
             closeConnection();
-            e.printStackTrace();
+            throw new RuntimeException("Something went wrong during a client connection establishing..");
+        }
+    }
+
+    public String readMessage() {
+        try {
+            message = in.readUTF();
+            return message;
+        } catch (IOException e) {
+            closeConnection();
+            throw new RuntimeException("Something went wrong during a client connection establishing..");
         }
     }
 
     public void readAndBroadcastMessage() {
-        try {
-            server.broadcastMessage(this.getName() + " --> " + in.readUTF());
-        } catch (IOException e) {
-            closeConnection();
-            e.printStackTrace();
-        }
-    }
-
-    public void read() {
-        try {
-            message = in.readUTF();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        server.broadcastMessage(this.getName() + " --> " + readMessage());
     }
 
     public String getMessage() {
@@ -109,20 +108,16 @@ public class ClientHandler {
 
     public synchronized void closing(){
         while (true) {
-            try {
-                if (in.readUTF().equals("/end")) {
-                    closeConnection();
-                    break;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (getMessage().startsWith("/end")) {
+                closeConnection();
+                break;
             }
         }
     }
 
     public void closeConnection() {
-        server.removeUsername(this);
         server.broadcastMessage("Attention: " + this.getName() + " exited the chat.");
+        server.removeUsername(this);
         try {
             in.close();
         } catch (IOException e) {

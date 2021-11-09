@@ -46,15 +46,23 @@ public class ChatServer {
                 .anyMatch(c -> c.getName().equals(username));
     }
 
-    public synchronized void broadcastMessage(String message) {
+    public synchronized void redirectMessage(String message) {
             String[] splitMessage = message.split("\\s");
             if(splitMessage[2].equals("/w")) {
-            String hiddenMessage = splitMessage[0] + " (hidden message to " + splitMessage[3] + ") -->" + message.substring(message.indexOf(splitMessage[4]));
-            loggedClients.stream()
-                    .filter(ch -> ch.getName().equals(splitMessage[3]) || ch.getName().equals(splitMessage[0]))
-                    .forEach(ch -> ch.sendMessage(hiddenMessage + "\n"));
+            hiddenMessage(message, splitMessage);
         } else {
-            loggedClients.forEach(ch -> ch.sendMessage(message + "\n"));
+            broadcastMessage(message);
         }
+    }
+
+    public synchronized void hiddenMessage(String message,String[] splitMessage) {
+        String hiddenMessage = splitMessage[0] + " (hidden message to " + splitMessage[3] + ") -->" + message.substring(message.indexOf(splitMessage[4]));
+        loggedClients.stream()
+                .filter(ch -> ch.getName().equals(splitMessage[3]) || ch.getName().equals(splitMessage[0]))
+                .forEach(ch -> ch.sendMessage(hiddenMessage + "\n"));
+    }
+
+    public synchronized void broadcastMessage(String message) {
+        loggedClients.forEach(ch -> ch.sendMessage(message + "\n"));
     }
 }

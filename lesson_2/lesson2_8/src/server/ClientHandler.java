@@ -15,7 +15,7 @@ public class ClientHandler {
     private final DataOutputStream out;
     private String name;
     private volatile String message;
-    private Thread t;
+    private final Thread t;
 
     public ClientHandler(Socket socket, ChatServer server) {
         // There can be any string here
@@ -45,7 +45,7 @@ public class ClientHandler {
 
     private void doAuthentication()  {
         try {
-            socket.setSoTimeout(12000);
+            socket.setSoTimeout(120000);
         } catch (SocketException e) {
             e.printStackTrace();
         }
@@ -102,8 +102,8 @@ public class ClientHandler {
         }
     }
 
-    public void readAndBroadcastMessage() {
-        server.broadcastMessage(this.getName() + " --> " + readMessage());
+    public void readAndRedirectMessage() {
+        server.redirectMessage(this.getName() + " --> " + readMessage());
     }
 
     public String getMessage() {
@@ -112,7 +112,7 @@ public class ClientHandler {
 
     public void redirectMessages() {
         while (!Thread.currentThread().isInterrupted()) {
-            readAndBroadcastMessage();
+            readAndRedirectMessage();
         }
     }
 

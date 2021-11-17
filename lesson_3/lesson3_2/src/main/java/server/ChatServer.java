@@ -9,12 +9,12 @@ import java.util.Set;
 public class ChatServer {
 
     private final ServerSocket socket;
-    private final AuthenticationService authenticationService;
+    private final UserService userService;
     private final Set<ClientHandler> loggedClients;
 
     public ChatServer() {
         try {
-            authenticationService = new AuthenticationService();
+            userService = new UserService();
             loggedClients = new HashSet<>();
             this.socket = new ServerSocket(8888);
 
@@ -29,8 +29,8 @@ public class ChatServer {
         }
     }
 
-    public AuthenticationService getAuthenticationService() {
-        return authenticationService;
+    public UserService getUserService() {
+        return userService;
     }
 
     public synchronized void addClient(ClientHandler client) {
@@ -50,9 +50,20 @@ public class ChatServer {
             String[] splitMessage = message.split("\\s");
             if(splitMessage[2].equals("/w")) {
             hiddenMessage(message, splitMessage);
-        } else {
+        }
+            else if(splitMessage[2].equals("/ch")){
+                changeUsername(splitMessage);
+            } else {
             broadcastMessage(message);
         }
+    }
+
+    public synchronized void changeUsername(String[] splitMessage) {
+        getUserService().changeUsername(splitMessage[0], splitMessage[3]);
+        loggedClients.stream()
+                        .filter(ch -> ch.getName().equals(splitMessage[0]))
+                                .forEach(ch -> ch.setName(splitMessage[3]));
+        loggedClients.forEach(ch -> ch.sendMessage(splitMessage[0] + " changed his/her name to " + splitMessage[3] + "\n"));
     }
 
     public synchronized void hiddenMessage(String message,String[] splitMessage) {

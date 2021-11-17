@@ -3,7 +3,7 @@ package server;
 import java.sql.*;
 import java.util.*;
 
-public class AuthenticationService {
+public class UserService {
 
     public Optional<String> findUsernameByLoginAndPassword(String login, String password) {
 
@@ -21,10 +21,26 @@ public class AuthenticationService {
                     return Optional.ofNullable(null);
                 }
             } catch (SQLException e) {
-                throw new RuntimeException("SWW during a fetching operation.", e);
+                throw new RuntimeException("SWW during a updating operation.", e);
             } finally {
                 DatabaseConnector.close(connection);
             }
+        }
+    public void changeUsername(String pastUsername, String newUsername) {
+        Connection connection = DatabaseConnector.getConnection();
+
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement ps = connection.prepareStatement("UPDATE public.users SET username = ? WHERE username = ? ");
+            ps.setString(1, newUsername);
+            ps.setString(2, pastUsername);
+            ps.executeUpdate();
+            connection.commit();
+        } catch (SQLException e) {
+            throw new RuntimeException("SWW during a fetching operation.", e);
+        } finally {
+            DatabaseConnector.close(connection);
+        }
         }
     }
 

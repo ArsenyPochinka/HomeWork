@@ -42,6 +42,9 @@ public class ClientHandler {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
 
     private void doAuthentication()  {
         try {
@@ -58,12 +61,15 @@ public class ClientHandler {
             sendMessage(password + "\n");
 
                 AtomicBoolean isSuccess = new AtomicBoolean(false);
-            server.getAuthenticationService()
+            server.getUserService()
                     .findUsernameByLoginAndPassword(login, password)
                     .ifPresentOrElse(username -> {
                         if (!server.isUsernameOccupied(username)) {
                             server.broadcastMessage(String.format("%s is logged in", username));
-                            sendMessage("Correct data, you are connected to the chat! \n\n");
+                            sendMessage("Correct data, you are connected to the chat! \n\n" +
+                                    "*If you want to send a hidden message, write \"/w\" \nand then recipient's username at the beginning of the line. \nFor example: \"/w user2...\" \n\n" +
+                                    "*If you want to change your username, write \"/ch\" \nand then your new username at the beginning of the line. \nFor example: \"/ch user4...\" \n\n" +
+                                    "*If you want to leave the chat, write \"/end\" \n\n");
                             name = username;
                             server.addClient(this);
                             isSuccess.set(true);

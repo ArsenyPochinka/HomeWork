@@ -10,14 +10,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ClientHandler {
 
     private final Socket socket;
-    private final server.ChatServer server;
+    private final ChatServer server;
     private final DataInputStream in;
     private final DataOutputStream out;
     private String name;
     private volatile String message;
     private final Thread t;
 
-    public ClientHandler(Socket socket, server.ChatServer server) {
+    public ClientHandler(Socket socket, ChatServer server) {
         // There can be any string here
         this.message = "start client";
         this.socket = socket;

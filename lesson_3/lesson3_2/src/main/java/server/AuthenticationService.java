@@ -1,60 +1,30 @@
 package server;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.sql.*;
+import java.util.*;
 
 public class AuthenticationService {
 
-    private static final Set<User> users = Set.of(
-            new User("user1", "l1", "p1"),
-            new User("user2", "l2", "p2"),
-            new User("user3", "l3", "p3")
-    );
-
     public Optional<String> findUsernameByLoginAndPassword(String login, String password) {
 
-        return users.stream()
-                .filter(u -> u.getLogin().equals(login) && u.getPassword().equals(password))
-                .findFirst()
-                .map(User::getUsername);
-    }
+            Connection connection = DatabaseConnector.getConnection();
 
-
-    private static class User {
-        private String username;
-        private String login;
-        private String password;
-
-        public User(String username, String login, String password) {
-            this.username = username;
-            this.login = login;
-            this.password = password;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        public String getLogin() {
-            return login;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            User user = (User) o;
-            return username.equals(user.username) && login.equals(user.login) && password.equals(user.password);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(username, login, password);
+            try {
+                PreparedStatement ps = connection.prepareStatement("SELECT username FROM public.users WHERE login=? AND password=?");
+                ps.setString(1, login);
+                ps.setString(2, password);
+                ResultSet rs = ps.executeQuery();
+                if(rs.next()) {
+                    return Optional.of(rs.getString("username"));
+                }
+                else {
+                    return Optional.ofNullable(null);
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException("SWW during a fetching operation.", e);
+            } finally {
+                DatabaseConnector.close(connection);
+            }
         }
     }
-}
+

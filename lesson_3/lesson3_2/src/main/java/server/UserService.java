@@ -36,9 +36,13 @@ public class UserService {
             ps.setString(2, pastUsername);
             ps.executeUpdate();
             connection.commit();
-        } catch (SQLException e) {
-            throw new RuntimeException("SWW during a fetching operation.", e);
-        } finally {
+        } catch (SQLException e1) {
+            try {
+                connection.rollback();
+            } catch (SQLException e2) {
+                throw new RuntimeException("SWW during a fetching operation.", e2);
+            }
+        }finally {
             DatabaseConnector.close(connection);
         }
         }

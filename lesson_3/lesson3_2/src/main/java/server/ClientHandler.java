@@ -13,11 +13,13 @@ public class ClientHandler {
     private final ChatServer server;
     private final DataInputStream in;
     private final DataOutputStream out;
+    private final LocalHistory localHistory;
     private String name;
     private volatile String message;
     private final Thread t;
 
     public ClientHandler(Socket socket, ChatServer server) {
+        localHistory = new LocalHistory();
         // There can be any string here
         this.message = "start client";
         this.socket = socket;
@@ -70,9 +72,12 @@ public class ClientHandler {
                                     "*If you want to send a hidden message, write \"/w\" \nand then recipient's username at the beginning of the line. \nFor example: \"/w user2...\" \n\n" +
                                     "*If you want to change your username, write \"/ch\" \nand then your new username at the beginning of the line. \nFor example: \"/ch user4...\" \n\n" +
                                     "*If you want to leave the chat, write \"/end\" \n\n");
+
                             name = username;
                             server.addClient(this);
                             isSuccess.set(true);
+
+                            sendLocalHistory();
                         } else {
                             sendMessage("This user is already connected. \n\n");
                         }
@@ -87,6 +92,25 @@ public class ClientHandler {
                     break;
                 }
             }
+    }
+
+    public void sendLocalHistory() {
+        localHistory.doBufferedInputStream();
+        int length = localHistory.getStringsList().size();
+        sendMessage("**************Local history of chat**************\n!!!!!!!!!!!!Hidden messages are not displayed here!!!!!!!!!!!!\n");
+        if(length>10) {
+            localHistory.getStringsList().subList(length-10, length)
+                    .forEach(str -> this.sendMessage(str + "\n"));
+        }
+        else {
+            localHistory.getStringsList()
+                    .forEach(str -> this.sendMessage(str + "\n"));
+            }
+        sendMessage("**************Local history of chat**************\n");
+    }
+
+    public void recordingLocalHistory(String message) {
+        localHistory.doBufferedOutputStream(message);
     }
 
     public void sendMessage(String outboundMessage) {

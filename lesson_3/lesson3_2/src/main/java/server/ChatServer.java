@@ -74,6 +74,9 @@ public class ChatServer {
     }
 
     public synchronized void broadcastMessage(String message) {
-        loggedClients.forEach(ch -> ch.sendMessage(message + "\n"));
+        loggedClients.forEach(ch -> {
+                ch.sendMessage(message + "\n");
+                ch.recordingLocalHistory(message + "\n");
+        });
     }
 }

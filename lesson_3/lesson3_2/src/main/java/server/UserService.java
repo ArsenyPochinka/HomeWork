@@ -18,7 +18,7 @@ public class UserService {
                     return Optional.of(rs.getString("username"));
                 }
                 else {
-                    return Optional.ofNullable(null);
+                    return Optional.empty();
                 }
             } catch (SQLException e) {
                 throw new RuntimeException("SWW during a updating operation.", e);

@@ -98,8 +98,8 @@ public class ClientHandler {
         localHistory.doBufferedInputStream();
         int length = localHistory.getStringsList().size();
         sendMessage("**************Local history of chat**************\n!!!!!!!!!!!!Hidden messages are not displayed here!!!!!!!!!!!!\n");
-        if(length>10) {
-            localHistory.getStringsList().subList(length-10, length)
+        if(length>100) {
+            localHistory.getStringsList().subList(length-100, length)
                     .forEach(str -> this.sendMessage(str + "\n"));
         }
         else {

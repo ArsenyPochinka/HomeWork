@@ -5,24 +5,28 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ChatServer {
 
     private final ServerSocket socket;
     private final UserService userService;
     private final Set<ClientHandler> loggedClients;
+    private final ExecutorService executorService ;
 
     public ChatServer() {
         try {
             userService = new UserService();
             loggedClients = new HashSet<>();
             this.socket = new ServerSocket(8888);
+            this.executorService = Executors.newCachedThreadPool();
 
             while (true) {
                 System.out.println("Waiting for a new connection...");
                 Socket client = socket.accept();
                 System.out.println("Client.Client accepted.");
-                new Thread(() -> new ClientHandler(client, this)).start();
+                executorService.submit(() -> new ClientHandler(client, this));
             }
         } catch (IOException e) {
             throw new RuntimeException("Something went wrong during connection establishing.", e);

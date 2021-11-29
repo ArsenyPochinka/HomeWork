@@ -1,11 +1,15 @@
+import java.util.Vector;
+
 public class Car implements Runnable {
     private static int CARS_COUNT;
+    private static final Vector<String> namesOfTheWinners;
     static {
         CARS_COUNT = 0;
+        namesOfTheWinners = new Vector<>();
     }
-    private Race race;
-    private int speed;
-    private String name;
+    private final Race race;
+    private final int speed;
+    private final String name;
     public String getName() {
         return name;
     }
@@ -24,11 +28,20 @@ public class Car implements Runnable {
             System.out.println(this.name + " готовится");
             Thread.sleep(500 + (int)(Math.random() * 800));
             System.out.println(this.name + " готов");
+            MainClass.countDownLatchStart.countDown();
+            MainClass.cyclicBarrier.await();
         } catch (Exception e) {
             e.printStackTrace();
         }
         for (int i = 0; i < race.getStages().size(); i++) {
             race.getStages().get(i).go(this);
         }
+        System.out.println(this.name + " завершил гонку");
+        namesOfTheWinners.add((namesOfTheWinners.size() + 1) + ". " + this.name);
+        MainClass.countDownLatchFinish.countDown();
+    }
+
+    public static Vector<String> getNamesOfTheWinners() {
+        return namesOfTheWinners;
     }
 }

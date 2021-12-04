@@ -7,28 +7,33 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ChatServer {
 
     private final ServerSocket socket;
     private final UserService userService;
     private final Set<ClientHandler> loggedClients;
-    private final ExecutorService executorService ;
+    private final ExecutorService executorService;
+    private static final Logger LOGGER = LogManager.getLogger(ChatServer.class);
 
     public ChatServer() {
         try {
             userService = new UserService();
             loggedClients = new HashSet<>();
             this.socket = new ServerSocket(8888);
+            LOGGER.info("The chat service is running.");
             this.executorService = Executors.newCachedThreadPool();
 
             while (true) {
-                System.out.println("Waiting for a new connection...");
+                LOGGER.debug("Waiting for a new connection...");
                 Socket client = socket.accept();
-                System.out.println("Client.Client accepted.");
+                LOGGER.debug("Client accepted.");
                 executorService.submit(() -> new ClientHandler(client, this));
             }
         } catch (IOException e) {
+            LOGGER.error("Something went wrong during connection establishing.");
             throw new RuntimeException("Something went wrong during connection establishing.", e);
         }
     }
@@ -68,6 +73,7 @@ public class ChatServer {
                         .filter(ch -> ch.getName().equals(splitMessage[0]))
                                 .forEach(ch -> ch.setName(splitMessage[3]));
         loggedClients.forEach(ch -> ch.sendMessage(splitMessage[0] + " changed his/her name to " + splitMessage[3] + "\n"));
+        LOGGER.debug("Some user changed his/her name");
     }
 
     public synchronized void hiddenMessage(String message,String[] splitMessage) {
@@ -75,6 +81,7 @@ public class ChatServer {
         loggedClients.stream()
                 .filter(ch -> ch.getName().equals(splitMessage[3]) || ch.getName().equals(splitMessage[0]))
                 .forEach(ch -> ch.sendMessage(hiddenMessage + "\n"));
+        LOGGER.debug("Some user sent hidden message");
     }
 
     public synchronized void broadcastMessage(String message) {
@@ -82,5 +89,6 @@ public class ChatServer {
                 ch.sendMessage(message + "\n");
                 ch.recordingLocalHistory(message + "\n");
         });
+        LOGGER.debug("The general message has been sent");
     }
 }

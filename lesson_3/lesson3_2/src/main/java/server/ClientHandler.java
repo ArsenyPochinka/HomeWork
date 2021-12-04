@@ -1,5 +1,8 @@
 package server;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -17,6 +20,7 @@ public class ClientHandler {
     private String name;
     private volatile String message;
     private final Thread t;
+    private static final Logger LOGGER = LogManager.getLogger(ClientHandler.class);
 
     public ClientHandler(Socket socket, ChatServer server) {
         localHistory = new LocalHistory();
@@ -117,6 +121,7 @@ public class ClientHandler {
         try {
             out.writeUTF(outboundMessage);
         } catch (IOException e) {
+            LOGGER.error("Something went wrong during connection establishing.");
             closeConnection();
             throw new RuntimeException("Something went wrong during a client connection establishing..");
         }
@@ -127,6 +132,7 @@ public class ClientHandler {
             message = in.readUTF();
             return message;
         } catch (IOException e) {
+            LOGGER.error("Something went wrong during connection establishing.");
             closeConnection();
             throw new RuntimeException("Something went wrong during a client connection establishing..");
         }
@@ -150,6 +156,7 @@ public class ClientHandler {
         while (true) {
             if (getMessage().startsWith("/end")) {
                 closeConnection();
+                LOGGER.debug("Client exited.");
                 break;
             }
         }
